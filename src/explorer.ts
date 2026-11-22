@@ -311,7 +311,7 @@ export class Explorer {
     return visible;
   }
 
-  private updateBadge(folder: TFolder, count: number): void {
+  private updateBadge(folder: TFolder, displayableCount: number): void {
     const row = this.view.fileItems[folder.path];
     let badge = this.badges.get(folder);
     if (badge && badge.row !== row) {
@@ -325,12 +325,20 @@ export class Explorer {
       badge = { row, el };
       this.badges.set(folder, badge);
     }
-    const text = String(count);
+    let fileCount = 0;
+    for (const child of folder.children) {
+      if (child instanceof TFile) fileCount++;
+    }
+    const text = String(fileCount);
     if (badge.el.textContent !== text) {
       badge.el.textContent = text;
-      badge.el.title = `直下のファイル ${count}件`;
       row.info.computed = false;
     }
+    const summary = `${folder.path} の直下に ${fileCount}件`;
+    const title = fileCount === displayableCount
+      ? summary
+      : `${summary}（一覧の表示対象 ${displayableCount}件）`;
+    if (badge.el.title !== title) badge.el.title = title;
     if (badge.el.parentNode !== row.selfEl) {
       row.selfEl.append(badge.el);
       row.info.computed = false;

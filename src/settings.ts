@@ -73,7 +73,7 @@ export class FolderLimitSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("フォルダ名の横に件数を表示")
-      .setDesc("省略前の直下ファイル数を表示します。サブフォルダ内のファイルは個別に表示されます。")
+      .setDesc("Vaultが認識する直下ファイル数を表示します。一覧で非表示の拡張子も含みます。")
       .addToggle((toggle) => toggle.setValue(settings.showFolderCounts)
         .onChange((showFolderCounts) => owner.updateSettings({ showFolderCounts })));
 
