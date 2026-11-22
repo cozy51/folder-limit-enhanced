@@ -4,6 +4,7 @@ import type FolderLimitEnhanced from "./main";
 export interface DisplaySettings {
   limit: number;
   showCount: boolean;
+  showFolderCounts: boolean;
   showButton: boolean;
   rememberExpanded: boolean;
 }
@@ -11,6 +12,7 @@ export interface DisplaySettings {
 export const DEFAULT_SETTINGS: DisplaySettings = {
   limit: 20,
   showCount: true,
+  showFolderCounts: true,
   showButton: true,
   rememberExpanded: true,
 };
@@ -30,6 +32,9 @@ export function readData(value: unknown): {
     settings: {
       limit: validLimit(data.limit) ? data.limit : DEFAULT_SETTINGS.limit,
       showCount: typeof data.showCount === "boolean" ? data.showCount : DEFAULT_SETTINGS.showCount,
+      showFolderCounts: typeof data.showFolderCounts === "boolean"
+        ? data.showFolderCounts
+        : DEFAULT_SETTINGS.showFolderCounts,
       showButton: typeof data.showButton === "boolean" ? data.showButton : DEFAULT_SETTINGS.showButton,
       rememberExpanded: typeof data.rememberExpanded === "boolean"
         ? data.rememberExpanded
@@ -65,6 +70,12 @@ export class FolderLimitSettingTab extends PluginSettingTab {
           text.setValue(String(owner.settings.limit));
         });
       });
+
+    new Setting(containerEl)
+      .setName("フォルダ名の横に件数を表示")
+      .setDesc("省略前の直下ファイル数を表示します。サブフォルダ内のファイルは個別に表示されます。")
+      .addToggle((toggle) => toggle.setValue(settings.showFolderCounts)
+        .onChange((showFolderCounts) => owner.updateSettings({ showFolderCounts })));
 
     new Setting(containerEl)
       .setName("残り件数を表示")

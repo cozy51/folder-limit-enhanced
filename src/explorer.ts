@@ -167,6 +167,7 @@ function wrap<T extends object, K extends keyof T>(
 /** Adapter for the built-in file-explorer virtual tree. */
 export class Explorer {
   private readonly rows = new Map<TFolder, ToggleRow>();
+  private readonly badges = new Map<TFolder, { row: VirtualRow; el: HTMLElement }>();
   private readonly cleanup: (() => void)[] = [];
   private readonly sortedItems: (folder: TFolder) => VirtualRow[];
   private active = true;
@@ -240,11 +241,15 @@ export class Explorer {
     for (const folder of this.rows.keys()) {
       if (folder.path === path || folder.path.startsWith(path + "/")) this.removeRow(folder);
     }
+    for (const folder of this.badges.keys()) {
+      if (folder.path === path || folder.path.startsWith(path + "/")) this.removeBadge(folder);
+    }
   }
 
   dispose(): void {
     this.active = false;
     for (const folder of this.rows.keys()) this.removeRow(folder);
+    for (const folder of this.badges.keys()) this.removeBadge(folder);
     for (const restore of this.cleanup.reverse()) restore();
     this.refresh();
   }
@@ -259,19 +264,22 @@ export class Explorer {
 
   private limitItems(folder: TFolder, items: VirtualRow[]): VirtualRow[] {
     if (!this.active || !(folder instanceof TFolder)) return items;
-    if (this.host.suspended() || this.view.tree.filter || !Array.isArray(items)) {
+    if (this.host.suspended() || !Array.isArray(items)) {
       this.removeRow(folder);
+      this.removeBadge(folder);
       return items;
     }
 
     const settings = this.host.settings();
     const { limit, showButton } = settings;
+    const searching = !!this.view.tree.filter;
     const expanded = this.host.expanded(folder.path);
+    const truncate = !searching && !expanded;
     let visible: VirtualRow[] | undefined;
     let fileCount = 0;
     for (let index = 0; index < items.length; index++) {
       const item = items[index];
-      if (this.countsAsFile(item) && ++fileCount > limit && !expanded) {
+      if (this.countsAsFile(item) && ++fileCount > limit && truncate) {
         visible ??= items.slice(0, index);
         this.clearHiddenSelection(item);
       } else {
@@ -279,7 +287,10 @@ export class Explorer {
       }
     }
 
-    if (fileCount <= limit || !showButton) {
+    if (settings.showFolderCounts) this.updateBadge(folder, fileCount);
+    else this.removeBadge(folder);
+
+    if (searching || fileCount <= limit || !showButton) {
       this.removeRow(folder);
       return visible ?? items;
     }
@@ -298,6 +309,40 @@ export class Explorer {
     visible ??= items.slice();
     visible.push(toggle);
     return visible;
+  }
+
+  private updateBadge(folder: TFolder, count: number): void {
+    const row = this.view.fileItems[folder.path];
+    let badge = this.badges.get(folder);
+    if (badge && badge.row !== row) {
+      this.removeBadge(folder);
+      badge = undefined;
+    }
+    if (row?.file !== folder) return;
+    if (!badge) {
+      const el = row.selfEl.ownerDocument.createElement("span");
+      el.className = "folder-limit-enhanced-count";
+      badge = { row, el };
+      this.badges.set(folder, badge);
+    }
+    const text = String(count);
+    if (badge.el.textContent !== text) {
+      badge.el.textContent = text;
+      badge.el.title = `直下のファイル ${count}件`;
+      row.info.computed = false;
+    }
+    if (badge.el.parentNode !== row.selfEl) {
+      row.selfEl.append(badge.el);
+      row.info.computed = false;
+    }
+  }
+
+  private removeBadge(folder: TFolder): void {
+    const badge = this.badges.get(folder);
+    if (!badge) return;
+    badge.el.remove();
+    badge.row.info.computed = false;
+    this.badges.delete(folder);
   }
 
   private revealLimitedFile(file: TAbstractFile): void {

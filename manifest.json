@@ -1,9 +1,9 @@
 {
   "id": "folder-limit-enhanced",
   "name": "Folder Limit Enhanced",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "minAppVersion": "1.15.1",
-  "description": "Limit the files shown per folder in the built-in file explorer and expand them with one click.",
+  "description": "Show file counts and limit the files displayed per folder in the built-in file explorer.",
   "author": "Folder Limit Enhanced contributors",
   "isDesktopOnly": true
 }
