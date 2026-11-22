@@ -96,8 +96,10 @@ export class ToggleRow implements VirtualRow {
   }
 
   update(label: string, expanded: boolean): void {
-    if (this.selfEl.textContent !== label) {
-      this.selfEl.textContent = label;
+    const scope = this.file.isRoot() ? "Vault直下" : `${this.file.name}直下`;
+    const text = `${label}（${scope}）`;
+    if (this.selfEl.textContent !== text) {
+      this.selfEl.textContent = text;
       this.info.computed = false;
     }
     this.selfEl.setAttribute("aria-expanded", String(expanded));
