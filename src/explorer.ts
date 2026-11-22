@@ -79,7 +79,7 @@ export class ToggleRow implements VirtualRow {
 
   constructor(doc: Document, readonly file: TFolder, private readonly activate: () => void) {
     this.el = doc.createElement("div");
-    this.el.className = "folder-limit-enhanced-row";
+    this.el.className = "tree-item folder-limit-enhanced-row";
     this.selfEl = doc.createElement("button");
     this.selfEl.type = "button";
     this.selfEl.className = "folder-limit-enhanced-toggle";
