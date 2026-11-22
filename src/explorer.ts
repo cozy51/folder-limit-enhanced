@@ -1,4 +1,5 @@
 import { TFile, TFolder, type TAbstractFile, type View } from "obsidian";
+import { countDirectFiles, type FolderCounts } from "./folder-counts";
 import type { DisplaySettings } from "./settings";
 
 interface VirtualInfo {
@@ -56,6 +57,7 @@ type ExplorerView = View & {
 
 interface ExplorerHost {
   settings(): DisplaySettings;
+  folderCounts(folder: TFolder): FolderCounts | undefined;
   suspended(): boolean;
   expanded(path: string): boolean;
   setExpanded(folder: TFolder, expanded: boolean, focus?: ToggleRow): void;
@@ -325,19 +327,19 @@ export class Explorer {
       badge = { row, el };
       this.badges.set(folder, badge);
     }
-    let fileCount = 0;
-    for (const child of folder.children) {
-      if (child instanceof TFile) fileCount++;
-    }
-    const text = String(fileCount);
+    const counts = this.host.settings().includeSubfolders ? this.host.folderCounts(folder) : undefined;
+    const fileCount = counts?.directFiles ?? countDirectFiles(folder);
+    const hasSubfolders = counts && counts.subfolders > 0;
+    const text = hasSubfolders
+      ? `${fileCount} / ${counts.totalFiles} · ${counts.subfolders}フォルダ`
+      : String(fileCount);
     if (badge.el.textContent !== text) {
       badge.el.textContent = text;
       row.info.computed = false;
     }
-    const summary = `${folder.path} の直下に ${fileCount}件`;
-    const title = fileCount === displayableCount
-      ? summary
-      : `${summary}（一覧の表示対象 ${displayableCount}件）`;
+    let title = `${folder.path} の直下に ${fileCount}件`;
+    if (fileCount !== displayableCount) title += `（一覧の表示対象 ${displayableCount}件）`;
+    if (hasSubfolders) title += `・配下を含めて ${counts.totalFiles}件、サブフォルダ ${counts.subfolders}個`;
     if (badge.el.title !== title) badge.el.title = title;
     if (badge.el.parentNode !== row.selfEl) {
       row.selfEl.append(badge.el);

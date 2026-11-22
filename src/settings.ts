@@ -5,6 +5,7 @@ export interface DisplaySettings {
   limit: number;
   showCount: boolean;
   showFolderCounts: boolean;
+  includeSubfolders: boolean;
   showButton: boolean;
   rememberExpanded: boolean;
 }
@@ -13,6 +14,7 @@ export const DEFAULT_SETTINGS: DisplaySettings = {
   limit: 20,
   showCount: true,
   showFolderCounts: true,
+  includeSubfolders: true,
   showButton: true,
   rememberExpanded: true,
 };
@@ -35,6 +37,9 @@ export function readData(value: unknown): {
       showFolderCounts: typeof data.showFolderCounts === "boolean"
         ? data.showFolderCounts
         : DEFAULT_SETTINGS.showFolderCounts,
+      includeSubfolders: typeof data.includeSubfolders === "boolean"
+        ? data.includeSubfolders
+        : DEFAULT_SETTINGS.includeSubfolders,
       showButton: typeof data.showButton === "boolean" ? data.showButton : DEFAULT_SETTINGS.showButton,
       rememberExpanded: typeof data.rememberExpanded === "boolean"
         ? data.rememberExpanded
@@ -76,6 +81,12 @@ export class FolderLimitSettingTab extends PluginSettingTab {
       .setDesc("Vaultが認識する直下ファイル数を表示します。一覧で非表示の拡張子も含みます。")
       .addToggle((toggle) => toggle.setValue(settings.showFolderCounts)
         .onChange((showFolderCounts) => owner.updateSettings({ showFolderCounts })));
+
+    new Setting(containerEl)
+      .setName("サブフォルダの件数も併記")
+      .setDesc("直下のファイル数、配下を含むファイル総数、サブフォルダ数を併記します。オフの場合は直下のファイル数だけ表示します。")
+      .addToggle((toggle) => toggle.setValue(settings.includeSubfolders)
+        .onChange((includeSubfolders) => owner.updateSettings({ includeSubfolders })));
 
     new Setting(containerEl)
       .setName("残り件数を表示")

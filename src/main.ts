@@ -1,5 +1,6 @@
 import { Notice, Plugin, TFolder, type EventRef, type View } from "obsidian";
 import { actionLabel, Explorer, type ToggleRow } from "./explorer";
+import { countFolderTree, type FolderCounts } from "./folder-counts";
 import { DEFAULT_SETTINGS, FolderLimitSettingTab, readData, type DisplaySettings } from "./settings";
 
 interface CommunityPlugins {
@@ -11,6 +12,7 @@ export default class FolderLimitEnhanced extends Plugin {
   settings = { ...DEFAULT_SETTINGS };
   private readonly expanded = new Set<string>();
   private readonly explorers = new Map<View, Explorer>();
+  private folderCounts?: WeakMap<TFolder, FolderCounts>;
   private active = false;
   private conflictReported = false;
   private conflictAtLastSync = false;
@@ -46,10 +48,13 @@ export default class FolderLimitEnhanced extends Plugin {
       }
     }));
 
+    this.registerEvent(vault.on("create", () => { this.folderCounts = undefined; }));
     this.registerEvent(vault.on("rename", (file, oldPath) => {
+      this.folderCounts = undefined;
       if (file instanceof TFolder) this.moveExpandedPaths(oldPath, file.path);
     }));
     this.registerEvent(vault.on("delete", (file) => {
+      this.folderCounts = undefined;
       if (!(file instanceof TFolder)) return;
       for (const explorer of this.explorers.values()) explorer.forgetFolder(file.path);
       this.moveExpandedPaths(file.path);
@@ -91,6 +96,10 @@ export default class FolderLimitEnhanced extends Plugin {
       if (this.explorers.has(view)) continue;
       const explorer = Explorer.attach(view, {
         settings: () => this.settings,
+        folderCounts: (folder) => {
+          this.folderCounts ??= countFolderTree(this.app.vault.getRoot());
+          return this.folderCounts.get(folder);
+        },
         suspended: () => this.suspended(),
         expanded: (path) => this.expanded.has(path),
         setExpanded: (folder, expanded, focus) => this.setExpanded(folder, expanded, focus),
