@@ -27,6 +27,22 @@
   background: var(--background-modifier-active-hover, var(--background-modifier-border));
 }
 
+.nav-files-container button.folder-limit-enhanced-toggle[aria-expanded="false"] {
+  background: color-mix(in srgb, var(--background-primary) 78%, #a78bfa);
+}
+
+.nav-files-container button.folder-limit-enhanced-toggle[aria-expanded="false"]:hover {
+  background: color-mix(in srgb, var(--background-primary) 68%, #a78bfa);
+}
+
+.nav-files-container button.folder-limit-enhanced-toggle[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--background-primary) 78%, #7ac58b);
+}
+
+.nav-files-container button.folder-limit-enhanced-toggle[aria-expanded="true"]:hover {
+  background: color-mix(in srgb, var(--background-primary) 68%, #7ac58b);
+}
+
 .nav-files-container button.folder-limit-enhanced-toggle:focus-visible,
 .nav-files-container button.folder-limit-enhanced-toggle.has-focus {
   outline: 2px solid var(--interactive-accent);
